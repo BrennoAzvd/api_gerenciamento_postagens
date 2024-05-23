@@ -12,16 +12,12 @@ public class PostMapper {
     if (post == null) {
       return null;
     }
-//    List<LessonDTO> lessons = course.getLessons()
-//            .stream()
-//            .map(lesson -> new LessonDTO(lesson.getId(), lesson.getName(),
-//                    lesson.getYoutubeUrl()))
-//            .collect(Collectors.toList());
+
     return new PostDTO(post.getId(), post.getTitle(), post.getDescription(), post.getCreation_date(),
-      post.getUpdate_date(), post.getPost_type().getValue());
+      post.getUpdate_date(), post.getPost_type().getValue(), post.getImage_name());
   }
 
-  public Post toEntity(PostDTO postDTO) {
+  public Post toEntity(PostDTO postDTO, String image) {
 
     if (postDTO == null) {
       return null;
@@ -34,8 +30,9 @@ public class PostMapper {
     post.setTitle(postDTO.title());
     post.setDescription(postDTO.description());
     post.setCreation_date(postDTO.creation_date());
-    post.setUpdate_date(postDTO.update_date());
+    //post.setUpdate_date(postDTO.update_date());
     post.setPost_type(convertPostTypeValue(postDTO.post_type()));
+    post.setImage_name(image);
     return post;
   }
 

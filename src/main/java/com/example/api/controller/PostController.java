@@ -7,9 +7,18 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,16 +27,13 @@ import java.util.UUID;
 @RequestMapping("/api/posts")
 public class PostController {
 
+  public static final String UPLOAD_DIRECTORY = "C:/Users/brenn/Documents/ImagesAPI/";
   private final PostService postService;
 
   public PostController(PostService postService) {
     this.postService = postService;
   }
 
-//  @GetMapping
-//  public List<PostDTO> list() {
-//    return postService.list();
-//  }
 
   @GetMapping
   public List<PostDTO> listPosts(Pageable pageable) {
@@ -41,8 +47,21 @@ public class PostController {
 
   @PostMapping
   @ResponseStatus(code = HttpStatus.CREATED)
-  public PostDTO create(@RequestBody @Valid @NotNull PostDTO post) {
-    return postService.create(post);
+  public PostDTO create(@RequestPart("data") @Valid @NotNull PostDTO post, @RequestParam("file") MultipartFile image) {
+    String ImageName = null;
+    try {
+      if (!image.isEmpty()) {
+        byte[] bytes = image.getBytes();
+        ImageName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+        Path caminho = Paths.get(UPLOAD_DIRECTORY + ImageName);
+        Files.write(caminho, bytes);
+
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return postService.create(post, ImageName);
   }
 
   @PutMapping("/{id}")
@@ -54,6 +73,87 @@ public class PostController {
   @DeleteMapping("/{id}")
   @ResponseStatus(code = HttpStatus.NO_CONTENT)
   public void delete(@PathVariable @NotNull UUID id) {
+
+      try {
+        PostDTO post = postService.findById(id);
+        if (post == null || post.image_name() == null || post.image_name().trim().isEmpty()) {
+          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found for the given ID");
+        }
+
+        Path path = Paths.get(UPLOAD_DIRECTORY + post.image_name());
+        if (Files.exists(path)) {
+          Files.delete(path);
+        } else {
+          throw new FileNotFoundException("File not found: " + post.image_name());
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting the image", e);
+      }
+
     postService.delete(id);
   }
-}
+
+  //Rotas referentes à imagem
+
+  @GetMapping("/ShowImage/{id}")
+  public byte[] returnImage(@PathVariable UUID id) throws IOException {
+    PostDTO post = postService.findById(id);
+    if (post == null || post.image_name() == null || post.image_name().trim().isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found for the given ID");
+    }
+
+    File imageFile = new File(UPLOAD_DIRECTORY + post.image_name());
+    return Files.readAllBytes(imageFile.toPath());
+  }
+
+  @DeleteMapping("/deleteImage/{imageName}")
+  @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void deleteImage(@PathVariable String imageName) {
+      try {
+        Path path = Paths.get(UPLOAD_DIRECTORY + imageName);
+        if (Files.exists(path)) {
+          Files.delete(path);
+        } else {
+          throw new FileNotFoundException("File not found: " + imageName);
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting the image", e);
+      }
+    }
+
+  @PutMapping("/updateImage/{id}")
+  public ResponseEntity<String> updateImage(@PathVariable UUID id, @RequestParam("file") MultipartFile newImage) {
+    try {
+      PostDTO post = postService.findById(id);
+      if (post == null) {
+        return ResponseEntity.notFound().build();
+      }
+
+      if (!newImage.isEmpty()) {
+        // Deletar a imagem antiga
+        String oldImageName = post.image_name();
+        Path oldImagePath = Paths.get(UPLOAD_DIRECTORY + oldImageName);
+        if (Files.exists(oldImagePath)) {
+          Files.delete(oldImagePath);
+        }
+
+        // Salvar a nova imagem
+        byte[] bytes = newImage.getBytes();
+        Path newPath = Paths.get(UPLOAD_DIRECTORY + UUID.randomUUID() + "_" + newImage.getOriginalFilename());
+        Files.write(newPath, bytes);
+
+        // Atualizar o nome da imagem no registro do post
+        postService.updateImageName(id, newImage.getOriginalFilename());
+      }
+
+      return ResponseEntity.ok("Image updated successfully");
+    } catch (IOException e) {
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating the image");
+    }
+  }
+
+
+  }

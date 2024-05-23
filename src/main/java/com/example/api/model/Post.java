@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -40,9 +41,9 @@ public class Post {
   @Convert(converter = PostTypeConverter.class)
   private PostType post_type;
 
-//  @Lob
-//  @NotNull
-//  private byte[] image;
+  private String image_name;
+
+
 
   @PrePersist
   protected  void onCreated(){
@@ -110,6 +111,14 @@ public class Post {
 
   public void setPost_type(@NotNull PostType post_type) {
     this.post_type = post_type;
+  }
+
+  public String getImage_name() {
+    return image_name;
+  }
+
+  public void setImage_name(String image_name) {
+    this.image_name = image_name;
   }
 
   @Override

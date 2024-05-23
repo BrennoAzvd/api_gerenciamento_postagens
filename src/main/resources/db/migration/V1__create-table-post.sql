@@ -4,5 +4,6 @@ CREATE TABLE post(
                      description varchar not null,
                      creation_date date,
                      update_date date,
-                     post_type varchar not null
+                     post_type varchar not null,
+                     image_name varchar
 );
