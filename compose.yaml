@@ -2,10 +2,10 @@ services:
   postgres:
     image: 'postgres:latest'
     environment:
-#      - 'POSTGRES_DB=database'
-#      - 'POSTGRES_PASSWORD=postgre'
+#       Nome padrão do BD: postgres
+#       Nome padrão do Usuário: postgres
+#       Como o password é o único que é obrigatório, foi definido assim:
       - 'POSTGRES_PASSWORD=${BD_ACESS_PASS}'
-#      - 'POSTGRES_USER=myuser'
-#      - 'POSTGRES_USER=${BD_ACESS_USER}'
+        #na meu BD local, coloquei como "postgre"
     ports:
       - '5432:5432'

@@ -19,7 +19,9 @@ public record PostDTO (
         /*@NotBlank*/ @JsonFormat(pattern="yyyy-MM-dd") LocalDate creation_date,
         /*@NotBlank*/ @JsonFormat(pattern="yyyy-MM-dd") LocalDate update_date,
         @NotNull @Length(max = 10) @ValueOfEnum(enumClass = PostType.class) String post_type,
-        String image_name
+        String image_name,
+        String user_registration,
+        String user_update
 ){
 
 }

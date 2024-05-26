@@ -1,12 +1,14 @@
 package com.example.api.enums;
 
 
+import lombok.Getter;
 
+@Getter
 public enum PostType {
 
     EDITAL("Edital"), NOTICIA("Noticia"), DIVULGACAO("Divulgacao");
 
-    private String value;
+    private final String value;
 
 
   private PostType(String value) {
@@ -14,16 +16,9 @@ public enum PostType {
   }
 
 
-  public String getValue() {
-    return value;
-  }
-
   @Override
   public String toString() {
     return value;
 
-//    return "PostType{" +
-//            "value='" + value + '\'' +
-//            '}';
   }
 }

@@ -3,6 +3,7 @@ package com.example.api.controller;
 
 import com.example.api.dto.PostDTO;
 import com.example.api.service.PostService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +28,14 @@ import java.util.UUID;
 @RequestMapping("/api/posts")
 public class PostController {
 
-  public static final String UPLOAD_DIRECTORY = "C:/Users/brenn/Documents/ImagesAPI/";
+/*
+Aqui, "UPLOAD_DIRECTORY" deve ser o nome da variável de ambiente que contém o caminho desejado.
+Certifique-se de que esta variável de ambiente está devidamente configurada no sistema onde a aplicação será executada.
+Exemplo: C:/Users/brenn/Documents/ImagesAPI/
+*/
+  public static final String UPLOAD_DIRECTORY = System.getenv("UPLOAD_DIRECTORY");
+  //C:/Users/brenn/Documents/ImagesAPI/
+
   private final PostService postService;
 
   public PostController(PostService postService) {
@@ -47,7 +55,7 @@ public class PostController {
 
   @PostMapping
   @ResponseStatus(code = HttpStatus.CREATED)
-  public PostDTO create(@RequestPart("data") @Valid @NotNull PostDTO post, @RequestParam("file") MultipartFile image) {
+  public PostDTO create(HttpServletRequest request, @RequestPart("data") @Valid @NotNull PostDTO post, @RequestParam("file") MultipartFile image) {
     String ImageName = null;
     try {
       if (!image.isEmpty()) {
@@ -61,13 +69,13 @@ public class PostController {
       e.printStackTrace();
     }
 
-    return postService.create(post, ImageName);
+    return postService.create(post, ImageName, request);
   }
 
   @PutMapping("/{id}")
-  public PostDTO update(@PathVariable @NotNull UUID id,
+  public PostDTO update(HttpServletRequest request,@PathVariable @NotNull UUID id,
                           @RequestBody @Valid @NotNull PostDTO post) {
-    return postService.update(id, post);
+    return postService.update(id, post, request);
   }
 
   @DeleteMapping("/{id}")
@@ -107,24 +115,10 @@ public class PostController {
     return Files.readAllBytes(imageFile.toPath());
   }
 
-  @DeleteMapping("/deleteImage/{imageName}")
-  @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public void deleteImage(@PathVariable String imageName) {
-      try {
-        Path path = Paths.get(UPLOAD_DIRECTORY + imageName);
-        if (Files.exists(path)) {
-          Files.delete(path);
-        } else {
-          throw new FileNotFoundException("File not found: " + imageName);
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting the image", e);
-      }
-    }
 
   @PutMapping("/updateImage/{id}")
   public ResponseEntity<String> updateImage(@PathVariable UUID id, @RequestParam("file") MultipartFile newImage) {
+    String ImageName = null;
     try {
       PostDTO post = postService.findById(id);
       if (post == null) {
@@ -141,7 +135,8 @@ public class PostController {
 
         // Salvar a nova imagem
         byte[] bytes = newImage.getBytes();
-        Path newPath = Paths.get(UPLOAD_DIRECTORY + UUID.randomUUID() + "_" + newImage.getOriginalFilename());
+        ImageName = UUID.randomUUID() + "_" + newImage.getOriginalFilename();
+        Path newPath = Paths.get(UPLOAD_DIRECTORY + ImageName);
         Files.write(newPath, bytes);
 
         // Atualizar o nome da imagem no registro do post

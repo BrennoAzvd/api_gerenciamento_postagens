@@ -5,21 +5,18 @@ import com.example.api.dto.PostDTO;
 import com.example.api.dto.mapper.PostMapper;
 import com.example.api.exception.RecordNotFoundException;
 import com.example.api.repository.PostRepository;
+import com.example.api.repository.UserRepository;
+import com.example.api.security.TokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 
@@ -27,20 +24,20 @@ import java.util.UUID;
 @Service
 public class PostService {
 
-  private final PostRepository postRepository;
-  private final PostMapper postMapper;
 
-  public PostService(PostRepository postRepository, PostMapper postMapper) {
+  private final PostRepository postRepository;
+  //@Autowired
+  private final UserRepository userRepository;
+  private final PostMapper postMapper;
+  @Autowired
+  protected TokenService tokenService;
+
+  public PostService(PostRepository postRepository, UserRepository userRepository, PostMapper postMapper) {
     this.postRepository = postRepository;
+    this.userRepository = userRepository;
     this.postMapper = postMapper;
   }
 
-//  public List<PostDTO> list() {
-//    return postRepository.findAll()
-//            .stream()
-//            .map(postMapper::toDTO)
-//            .toList();
-//  }
 
   public Page<PostDTO> listPosts(Pageable pageable) {
     return postRepository.findAll(pageable)
@@ -52,18 +49,23 @@ public class PostService {
             .orElseThrow(() -> new RecordNotFoundException(id));
   }
 
-  public PostDTO create(@Valid @NotNull PostDTO post, String image) {
+  public PostDTO create(@Valid @NotNull PostDTO post, String image, HttpServletRequest request) {
 
-    return postMapper.toDTO(postRepository.save(postMapper.toEntity(post, image)));
+    return postMapper.toDTO(postRepository.save(postMapper.toEntity(post, image, request)));
   }
 
-  public PostDTO update(@NotNull UUID id, @Valid @NotNull PostDTO post) {
+  public PostDTO update(@NotNull UUID id, @Valid @NotNull PostDTO post, HttpServletRequest request) {
+    var token = tokenService.recoverToken(request);
+    var login = tokenService.validateToken(token);
+    UserDetails user = userRepository.findUsersByUsername(login);
+    
     return postRepository.findById(id)
             .map(recordFound -> {
               recordFound.setTitle(post.title());
               recordFound.setDescription(post.description());
               recordFound.setUpdate_date(post.update_date());
               recordFound.setPost_type(postMapper.convertPostTypeValue(post.post_type()));
+              recordFound.setUser_update(user.getUsername());
               return postMapper.toDTO(postRepository.save(recordFound));
             }).orElseThrow(() -> new RecordNotFoundException(id));
   }

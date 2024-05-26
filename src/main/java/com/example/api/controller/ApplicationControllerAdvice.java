@@ -46,4 +46,10 @@ public class ApplicationControllerAdvice {
     return "Argument type not valid";
   }
 
+//  @ExceptionHandler(NullPointerException.class)
+//  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+//  public String handleNullPointerException(NullPointerException ex) {
+//    return ex.getMessage();
+//  }
+
 }
