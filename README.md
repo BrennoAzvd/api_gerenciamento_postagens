@@ -27,5 +27,8 @@ Esta API faz o gerencimento de postagens. Contendo assim:
     
 - Flyway
 
+## Executando:
+Você precisa ter o Java e o Maven instalados e configurados localmente. Abra o projeto api_gerencimento_postagens na sua IDE de preferência como um projeto Maven e execute-o como um aplicativo Spring Boot.
+
 ## Documentação (Postman):
 https://documenter.getpostman.com/view/23245848/2sA3QqhZEd
