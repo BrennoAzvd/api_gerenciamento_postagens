@@ -1,3 +1,5 @@
+
+
 # Resumo
 
 Esta API faz o gerencimento de postagens. Contendo assim:
@@ -33,3 +35,7 @@ Também é necessário instalar o Docker e iniciá-lo antes de rodar a aplicaç�
 
 ## Documentação (Postman):
 https://documenter.getpostman.com/view/23245848/2sA3QqhZEd
+
+
+
+-> _Aplicação ainda em desenvolvimento_
